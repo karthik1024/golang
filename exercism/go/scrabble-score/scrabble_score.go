@@ -4,40 +4,30 @@ import (
 	"unicode"
 )
 
+// createPoints returns a map between letters and scores.
 func createPoints() map[rune]int {
+	groups := map[string]int{
+		"aeioulnrst": 1,
+		"dg":         2,
+		"bcmp":       3,
+		"fhvwy":      4,
+		"k":          5,
+		"jx":         8,
+		"qz":         10,
+	}
+
 	points := map[rune]int{}
 
-	for _, char := range "aeioulnrst" {
-		points[char] = 1
-	}
-
-	for _, char := range "dg" {
-		points[char] = 2
-	}
-
-	for _, char := range "bcmp" {
-		points[char] = 3
-	}
-
-	for _, char := range "fhvwy" {
-		points[char] = 4
-	}
-
-	for _, char := range "k" {
-		points[char] = 5
-	}
-
-	for _, char := range "jx" {
-		points[char] = 8
-	}
-
-	for _, char := range "qz" {
-		points[char] = 10
+	for gp, p := range groups {
+		for _, c := range gp {
+			points[c] = p
+		}
 	}
 
 	return points
 }
 
+// Score returns the scrabble score for a word.
 func Score(word string) int {
 	points := createPoints()
 	s := 0
