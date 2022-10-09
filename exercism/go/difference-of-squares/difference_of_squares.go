@@ -1,11 +1,8 @@
 package diffsquares
 
-import (
-	"math"
-)
-
 func SquareOfSum(n int) int {
-	return int(math.Pow(float64(n), 2)*math.Pow(float64(n+1), 2)) >> 2
+	s := (n * (n + 1) >> 1)
+	return s * s
 }
 
 func SumOfSquares(n int) int {
