@@ -1,6 +1,9 @@
 package scrabble
 
 import (
+	"errors"
+	"fmt"
+	"strings"
 	"unicode"
 )
 
@@ -27,13 +30,37 @@ func createPoints() map[rune]int {
 	return points
 }
 
-var POINTS = createPoints()
+//var POINTS = createPoints()
+
+func charScore(char rune) (int, error) {
+	if strings.ContainsRune("aeioulnrst", char) {
+		return 1, nil
+	} else if strings.ContainsRune("dg", char) {
+		return 2, nil
+	} else if strings.ContainsRune("bcmp", char) {
+		return 3, nil
+	} else if strings.ContainsRune("fhvwy", char) {
+		return 4, nil
+	} else if strings.ContainsRune("k", char) {
+		return 5, nil
+	} else if strings.ContainsRune("jx", char) {
+		return 8, nil
+	} else if strings.ContainsRune("qz", char) {
+		return 10, nil
+	} else {
+		return 0, errors.New(fmt.Sprintf("Unknown rune %c", char))
+	}
+}
 
 // Score returns the scrabble score for a word.
 func Score(word string) int {
 	s := 0
+
 	for _, c := range word {
-		s += POINTS[unicode.ToLower(c)]
+		cs, err := charScore(unicode.ToLower(c))
+		if err == nil {
+			s += cs
+		}
 	}
 	return s
 }
