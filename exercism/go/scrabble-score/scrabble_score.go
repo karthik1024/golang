@@ -27,12 +27,13 @@ func createPoints() map[rune]int {
 	return points
 }
 
+var POINTS = createPoints()
+
 // Score returns the scrabble score for a word.
 func Score(word string) int {
-	points := createPoints()
 	s := 0
 	for _, c := range word {
-		s += points[unicode.ToLower(c)]
+		s += POINTS[unicode.ToLower(c)]
 	}
 	return s
 }
