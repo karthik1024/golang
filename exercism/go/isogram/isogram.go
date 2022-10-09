@@ -1,6 +1,7 @@
 package isogram
 
 import (
+	"strings"
 	"unicode"
 )
 
@@ -8,18 +9,12 @@ var exists = struct{}{}
 
 // IsIsogram returns True when a word is an isogram and False otherwise.
 func IsIsogram(word string) bool {
-	m := make(map[rune]bool)
+	s := strings.ToLower(word)
 
-	for _, c := range word {
-		if !unicode.IsLetter(c) {
-			continue
-		}
-
-		c = unicode.ToLower(c)
-		if m[c] {
+	for i, c := range s {
+		if unicode.IsLetter(c) && strings.ContainsRune(s[i+1:], c) {
 			return false
 		}
-		m[c] = true
 	}
 	return true
 }
