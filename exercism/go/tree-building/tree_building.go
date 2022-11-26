@@ -1,29 +1,59 @@
 package tree
 
-import "sort"
+import (
+	"fmt"
+	"sort"
+)
 
 type Record struct {
 	ID     int
 	Parent int
-	// feel free to add fields as you see fit
 }
 
 type Node struct {
 	ID       int
 	Children []*Node
-
-	// feel free to add fields as you see fit
 }
 
+// AddSortedChildren adds a new child and then sorts children based on ID.
 func AddSortedChildren(parent *Node, newChild *Node) {
-	//x := sort.Search(newChild.ID, func(i int) bool { return newChild.ID >= parent.Children[i].ID })
 	parent.Children = append(parent.Children, newChild)
-	//copy(parent.Children[x+1:], parent.Children[x:])
-	//parent.Children[x] = newChild
-	sort.Slice(parent.Children, func(i, j int) bool { return parent.Children[i].ID < parent.Children[j].ID })
+	sort.Slice(parent.Children,
+		func(i, j int) bool { return parent.Children[i].ID < parent.Children[j].ID })
+}
+
+// ChildAlreadyPresent checks if a child is already present in the parent node.
+func ChildAlreadyPresent(parent *Node, newChild *Node) bool {
+	for _, c := range parent.Children {
+		if newChild.ID == c.ID {
+			return true
+		}
+	}
+	return false
+}
+
+// ContinuityCheck checks if the tree has a continuous sequence of record IDs.
+func ContinuityCheck(nodeMap map[int]*Node, recordLen int) error {
+	maxKey := 0
+	for k := range nodeMap {
+		if k > maxKey {
+			maxKey = k
+		}
+	}
+	if recordLen != 1+maxKey {
+		return fmt.Errorf("non-continuous records")
+	}
+
+	return nil
 }
 
 func Build(records []Record) (*Node, error) {
+
+	if len(records) == 0 {
+		return nil, nil
+	}
+
+	rootSeen := false
 	nodeMap := make(map[int]*Node)
 
 	for _, r := range records {
@@ -33,29 +63,55 @@ func Build(records []Record) (*Node, error) {
 		if !ok {
 			n = &Node{ID: r.ID}
 			nodeMap[r.ID] = n
-		}
-		// If root key, no need for anything else except entry
-		// into nodeMap.
-		if r.ID == 0 {
-			continue
+		} else {
+			if r.ID == 0 && rootSeen {
+				return nil, fmt.Errorf("duplicate root detected")
+			}
 		}
 
-		// Add parent key if required, and update it.
-		val, ok := nodeMap[r.Parent]
+		// If root key, ensure no parent and continue with next record.
+		if r.ID == 0 {
+			rootSeen = true
+			if r.Parent != 0 {
+				return nil, fmt.Errorf("root cannot have a parent %d", r.Parent)
+			} else {
+				continue
+			}
+		}
+
+		// Parent ID must be lower than child ID.
+		if r.ID <= r.Parent {
+			return nil, fmt.Errorf("parent id %d must be greater than child id %d", r.Parent, r.ID)
+		}
+
+		// Add parent key if required, and update its children.
+		parent, ok := nodeMap[r.Parent]
 		if ok {
 			// Don't add duplicate child entries.
-			for _, c := range val.Children {
-				if n.ID == c.ID {
-					panic("Duplicate error.")
-				}
+			if ChildAlreadyPresent(parent, n) {
+				return nil, fmt.Errorf("child with ID %d to parent %d already exists", n.ID, parent.ID)
 			}
-			AddSortedChildren(val, n)
-			//val.Children = append(val.Children, n)
+			AddSortedChildren(parent, n)
 		} else {
 			p := &Node{ID: r.Parent}
 			nodeMap[r.Parent] = p
 			p.Children = append(p.Children, n)
 		}
 	}
-	return nodeMap[0], nil
+
+	root, ok := nodeMap[0]
+	if !ok {
+		return nil, fmt.Errorf("tree not connected to root node")
+	}
+
+	if !rootSeen {
+		return nil, fmt.Errorf("root node not explicitly specified")
+	}
+
+	err := ContinuityCheck(nodeMap, len(records))
+	if err != nil {
+		return nil, err
+	}
+
+	return root, nil
 }
